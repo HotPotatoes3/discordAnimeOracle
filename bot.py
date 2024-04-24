@@ -144,6 +144,27 @@ def run_discord_bot(discord):
             await interaction.followup.send(f"**Title: {data["title"]}**\nID: {data['id']}\n\nAlternative Titles:\nEnglish: {data['alternative_titles']['en']}\njapanese:{data['alternative_titles']['ja']}\n\nMAL Rating: {data['mean']}/10\nMAL Rank: #{data['rank']}\n\nStart Date: {data['start_date']}\nStatus: {status}\nNumber of Episodes: {data['num_episodes']}\n\nAge Rating: {age_rating}\nGenres: {genres}\n\nSynopsis:\n{synopsis}\n{data['main_picture']['large']}", view=view)
 
 
+    @bot.tree.command(name='searchanime', description='Search for an anime')
+    @app_commands.describe(input="What do you want to search?")
+    async def searchanime(interaction: discord.Interaction, input: str):
+        await interaction.defer()
+        url = f'https://api.myanimelist.net/v2/anime?q={input}&limit=5'
+        result = responses.makeMALCall(url)
+        data = result['data']
+        await interaction.followup.reply("Here are your top search results: ")
+        for i in data:
+            title = i['node']['title']
+            id = i['node']['id']
+            img = i['node']['main_picture']['medium']
+
+            resp = f'**Title: {title}**\nID: {id}\n{img}'
+            view2 = getDetails(id)
+            await interaction.followup.reply(resp, view=view2)
+        view = searchMenu(input)
+        await interaction.followup.reply("If you didn't find what you were looking for, click here to get more search results",
+                        view=view)
+
+
 
 
 
