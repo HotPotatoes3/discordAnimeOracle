@@ -707,6 +707,26 @@ def run_discord_bot(discord):
 
         await interaction.response.send_message(embed=embed)
 
+    @bot.tree.command(name='topmal', description="View the server's top anime")
+    async def topmal(interaction: discord.Interaction):
+        url = f'https://api.myanimelist.net/v2/anime/ranking?ranking_type=all&limit=5'
+        await interaction.response.defer()
+        result = responses.makeMALCall(url)
+        data = result['data']
+        await interaction.followup.send("Here are the top 5 anime on MAL: ")
+        count = 1
+        for i in data:
+            title = i['node']['title']
+            id = i['node']['id']
+            img = i['node']['main_picture']['medium']
+            resp = f'**#{count}: {title}**\nID: {id}\n{img}'
+            view2 = getDetails(id)
+            await interaction.followup.send(resp, view=view2)
+            count += 1
+        view = searchMenu3()
+        await interaction.followup.send("Click here to see the next 15 top anime of all time",
+                        view=view)
+
     @bot.tree.command(name='addanime', description="Add an anime to your list")
     @app_commands.describe(animeid="The ID of the anime you want to add. Use $searchanime if you don't know it.", rating = "The rating of the show. It must be from 1-10")
     async def addanime(interaction: discord.Interaction, animeid: int, rating: int):
