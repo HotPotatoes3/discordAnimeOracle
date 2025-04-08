@@ -4,7 +4,9 @@ import responses
 import sqlite3
 from dotenv import load_dotenv
 import random
-import datetime
+from datetime import datetime, timezone, timedelta
+import asyncio
+
 
 
 def run_discord_bot(discord):
@@ -41,10 +43,24 @@ def run_discord_bot(discord):
             )""")
 
         print("Initialized database")
+        
+        check_inactive_channels.start()
+        
 
     chat = responses.create_chat()
     HISTORY_FILE = "conversation_history.txt"
     MAX_LINES = 300  # Set this to the max number of lines you want in the file
+
+
+    @tasks.loop(minutes=20)
+    async def check_inactive_channels():
+        now = datetime.now(timezone.utc)
+        for channel_id, last_message_time in monitored_channels.items():
+            if now - last_message_time > timedelta(minutes=60):
+                channel = bot.get_channel(channel_id)
+                if channel:
+                    await channel.send("<@&1341216663416340533> WAKEY WAKEY. You better start talking or I'll MAKE you talk.")
+
 
     def save_history(username, user_message, bot_response):
         # Read the existing lines
@@ -65,6 +81,10 @@ def run_discord_bot(discord):
         # Write back to the file
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             f.writelines(lines)
+
+
+    
+
 
     @bot.event
     async def on_message(message):
@@ -98,7 +118,7 @@ def run_discord_bot(discord):
                     elif rannum == -1:
                         resp = chat.send_message(f"Make up a random reason to timeout this chatter, {username}, for 5 minutes based on their message: {user_message}").text
                         await message.reply(resp)
-                        await message.author.timeout(datetime.timedelta(minutes=5),reason = resp)
+                        await message.author.timeout(timedelta(minutes=5),reason = resp)
                         save_history(username, user_message, resp)
                     else:
                         save_history(username, user_message, "")
@@ -106,6 +126,21 @@ def run_discord_bot(discord):
             else:
                 save_history(username, user_message, "")
                 await bot.process_commands(message)
+                if message.channel.id in monitored_channels:
+                    monitored_channels[message.channel.id] = datetime.now(timezone.utc)
+
+    monitored_channels = {}
+    @bot.command()
+    async def monitor(ctx):
+        monitored_channels[ctx.channel.id] = datetime.now(timezone.utc)
+        await ctx.send(f"I'm monitoring this channel for inactivity, you better start yapping you BUMS.")
+    @bot.tree.command(name='monitor', description='List commands (non-slash commands)')
+    async def monitor(interaction: discord.Interaction):
+        try:
+            await interaction.response.send_message("I'm monitoring this channel for inactivity, you better start yapping you BUMS.")
+        except Exception as e:
+            print(e)
+            await interaction.response.send_message("Failed")
 
 
 
@@ -873,8 +908,5 @@ def run_discord_bot(discord):
             print(e)
             await ctx.message.reply("Please check your input and try again")
 
-
-
-
-
+    
     bot.run(TOKEN)
