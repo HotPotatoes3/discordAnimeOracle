@@ -2,13 +2,18 @@ import os
 from discord.ext import commands, tasks
 import responses
 import sqlite3
+from dotenv import load_dotenv
+import random
+import datetime
 
 
 def run_discord_bot(discord):
-    TOKEN = os.environ["TOKEN"]
+    load_dotenv()
+    TOKEN = os.getenv('BOT_KEY')
 
+    
     app_commands = discord.app_commands
-    bot = commands.Bot(command_prefix=".$", intents=discord.Intents.all())
+    bot = commands.Bot(command_prefix="$", intents=discord.Intents.all())
     bot.remove_command("help")
     connection = sqlite3.connect("mydata.db")
     cursor = connection.cursor()
@@ -36,6 +41,73 @@ def run_discord_bot(discord):
             )""")
 
         print("Initialized database")
+
+    chat = responses.create_chat()
+    HISTORY_FILE = "conversation_history.txt"
+    MAX_LINES = 300  # Set this to the max number of lines you want in the file
+
+    def save_history(username, user_message, bot_response):
+        # Read the existing lines
+        try:
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except FileNotFoundError:
+            lines = []
+
+        # Append the new messages
+        lines.append(f"{username}: {user_message}\n")
+        lines.append(f"Bot: {bot_response}\n")
+
+        # Trim to the last MAX_LINES
+        if len(lines) > MAX_LINES:
+            lines = lines[-MAX_LINES:]
+
+        # Write back to the file
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            f.writelines(lines)
+
+    @bot.event
+    async def on_message(message):
+        if message.author != bot.user:
+            username = str(message.author)
+            user_message = str(message.content)
+            channel = str(message.channel)
+
+            print(f"{username} said: '{user_message}' ({channel})")
+            if user_message[0] != '$':
+                if bot.user in message.mentions:
+                    resp = chat.send_message(f"Respond relevantly to this chat message from a chatter,{username}, talking to you (<@1232601971870138409> is your ping, ignore it and avoid using it in your message): {user_message}").text
+                    await message.reply(resp)
+                    save_history(username, user_message, resp)
+                elif message.reference is not None:
+                    replied_message = await message.channel.fetch_message(message.reference.message_id)
+                    if replied_message.author == bot.user:
+                        resp = chat.send_message(f"Respond relevantly to this chat message from a chatter, {username}, talking to you): {user_message}").text
+                        await message.reply(resp)
+                        save_history(username, user_message, resp)
+                elif message.guild is None:
+                    resp = chat.send_message(f"Respond relevantly to this chat message (it's a dm to you): {user_message}").text
+                    await message.author.send(resp)
+                    save_history(username, user_message, resp)
+                else:
+                    rannum = random.randint(1,300)
+                    if rannum >= 301:
+                        resp = chat.send_message(f"Try to respond relevantly to this chat message from {username}, based on the discord chat history (They are usually not talking to you): {user_message}").text
+                        await message.reply(resp)
+                        save_history(username, user_message, resp)
+                    elif rannum == -1:
+                        resp = chat.send_message(f"Make up a random reason to timeout this chatter, {username}, for 5 minutes based on their message: {user_message}").text
+                        await message.reply(resp)
+                        await message.author.timeout(datetime.timedelta(minutes=5),reason = resp)
+                        save_history(username, user_message, resp)
+                    else:
+                        save_history(username, user_message, "")
+                        
+            else:
+                save_history(username, user_message, "")
+                await bot.process_commands(message)
+
+
 
     #Commands for inserting/getting from database
     def insert_data(user_id, data, data2):
@@ -90,7 +162,6 @@ def run_discord_bot(discord):
             description=description,
             title=f"{ctx.author}'s Top Anime"
         )
-        embed.set_footer(text="Page 1")
 
         embed.set_thumbnail(url=ctx.author.avatar.url)
 
@@ -160,7 +231,6 @@ def run_discord_bot(discord):
             )
 
             embed.set_thumbnail(url=self.ctx.avatar.url)
-            embed.set_footer(text="Page 2")
 
             print(self.num)
 
@@ -197,7 +267,6 @@ def run_discord_bot(discord):
             )
 
             pagenum = (self.num -1) // 15 + 1
-            embed.set_footer(text=f"Page {pagenum}")
             embed.set_thumbnail(url=self.ctx.avatar.url)
 
             if self.num == 0:
@@ -234,7 +303,6 @@ def run_discord_bot(discord):
             )
 
             pagenum = (self.num - 1) // 15 + 1
-            embed.set_footer(text=f"Page {pagenum}")
             embed.set_thumbnail(url=self.ctx.avatar.url)
 
             if self.num == 0:
@@ -261,7 +329,6 @@ def run_discord_bot(discord):
             )
 
             pagenum = (self.num -1) // 15 + 1
-            embed.set_footer(text=f"Page {pagenum}")
             embed.set_thumbnail(url=self.ctx.avatar.url)
 
             if len(self.sorted_list) - self.num <= 15:
@@ -666,7 +733,6 @@ def run_discord_bot(discord):
             description=description,
             title=f"{interaction.user}'s Top Anime"
         )
-        embed.set_footer(text="Page 1")
 
         embed.set_thumbnail(url=interaction.user.avatar.url)
 
@@ -788,14 +854,14 @@ def run_discord_bot(discord):
     @bot.tree.command(name='help', description='List commands (non-slash commands)')
     async def help(interaction: discord.Interaction):
         try:
-            await interaction.send_message("'**Commands:**\n\n**$askgojo {Your question/statement}:** Responds as Gojo Satoru from Jujutsu Kaisen\n**$searchanime {Your query}:** Search for an anime title\n**$topMAL:** Gives the top rated anime on MyAnimeList\n**$mylist:** Sends your list of anime\n**$addanime {animeid}:** Adds an anime to your list based on the anime id (use $searchanime to find it)\n**$removeanime {animeid}: **Removes an anime from your list based on the anime id\n**$topserver:** Takes the average rating of all users on the current server to return the top 15 highest rated anime.")
+            await interaction.response.send_message("**Commands:**\n\n**$searchanime {Your query}:** Search for an anime title\n**$topMAL:** Gives the top rated anime on MyAnimeList\n**$mylist:** Sends your list of anime\n**$addanime {animeid}:** Adds an anime to your list based on the anime id (use $searchanime to find it)\n**$removeanime {animeid}: **Removes an anime from your list based on the anime id\n**$topserver:** Takes the average rating of all users on the current server to return the top 15 highest rated anime.")
         except Exception as e:
             print(e)
             await interaction.response.send_message("Failed")
 
     @bot.command()
     async def help(ctx):
-        await ctx.message.reply("'**Commands:**\n\n**$askgojo {Your question/statement}:** Responds as Gojo Satoru from Jujutsu Kaisen\n**$searchanime {Your query}:** Search for an anime title\n**$topMAL:** Gives the top rated anime on MyAnimeList\n**$mylist:** Sends your list of anime\n**$addanime {animeid}:** Adds an anime to your list based on the anime id (use $searchanime to find it)\n**$removeanime {animeid}: **Removes an anime from your list based on the anime id\n**$topserver:** Takes the average rating of all users on the current server to return the top 15 highest rated anime.")
+        await ctx.message.reply("**Commands:**\n\n**$searchanime {Your query}:** Search for an anime title\n**$topMAL:** Gives the top rated anime on MyAnimeList\n**$mylist:** Sends your list of anime\n**$addanime {animeid}:** Adds an anime to your list based on the anime id (use $searchanime to find it)\n**$removeanime {animeid}: **Removes an anime from your list based on the anime id\n**$topserver:** Takes the average rating of all users on the current server to return the top 15 highest rated anime.")
 
     @bot.command()
     async def askgojo(ctx):
