@@ -56,6 +56,7 @@ def run_discord_bot(discord):
     async def check_inactive_channels():
         now = datetime.now(timezone.utc)
         for channel_id, last_message_time in monitored_channels.items():
+            # print(now - last_message_time)
             if now - last_message_time > timedelta(minutes=60):
                 channel = bot.get_channel(channel_id)
                 if channel:
@@ -126,8 +127,8 @@ def run_discord_bot(discord):
             else:
                 save_history(username, user_message, "")
                 await bot.process_commands(message)
-                if message.channel.id in monitored_channels:
-                    monitored_channels[message.channel.id] = datetime.now(timezone.utc)
+        if message.channel.id in monitored_channels:
+            monitored_channels[message.channel.id] = datetime.now(timezone.utc)
 
     monitored_channels = {}
     @bot.command()
