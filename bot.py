@@ -57,9 +57,11 @@ def run_discord_bot(discord):
         now = datetime.now(timezone.utc)
         for channel_id, last_message_time in monitored_channels.items():
             # print(now - last_message_time)
-            if now - last_message_time > timedelta(minutes=60):
+            if now - last_message_time > timedelta(minutes=120):
                 channel = bot.get_channel(channel_id)
                 if channel:
+                    global chat
+                    chat = responses.create_chat
                     await channel.send("<@&1341216663416340533> WAKEY WAKEY. You better start talking or I'll MAKE you talk.")
 
 
@@ -142,6 +144,14 @@ def run_discord_bot(discord):
         except Exception as e:
             print(e)
             await interaction.response.send_message("Failed")
+
+
+    #Reset chat bot
+    @bot.command()
+    async def resetchat(ctx):
+        global chat
+        chat = responses.create_chat
+        await ctx.send("My memory is wiped 🥀")
 
 
 

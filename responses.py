@@ -78,8 +78,6 @@ Satoru's dream and endgame is to reform the jujutsu world from the bottom up thr
 
 5. You MUST keep your responses under 80 words, ideally around 50.
 
-6. This is some of the discord chat history, use it to respond relevantly to messages to chatters not addressing you: {history}
-
 """
 
 
