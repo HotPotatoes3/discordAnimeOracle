@@ -900,24 +900,15 @@ def run_discord_bot(discord):
     @bot.tree.command(name='help', description='List commands (non-slash commands)')
     async def help(interaction: discord.Interaction):
         try:
-            await interaction.response.send_message("**Commands:**\n\n**$searchanime {Your query}:** Search for an anime title\n**$topMAL:** Gives the top rated anime on MyAnimeList\n**$mylist:** Sends your list of anime\n**$addanime {animeid}:** Adds an anime to your list based on the anime id (use $searchanime to find it)\n**$removeanime {animeid}: **Removes an anime from your list based on the anime id\n**$topserver:** Takes the average rating of all users on the current server to return the top 15 highest rated anime.")
+            await interaction.response.send_message("**Commands:**\n\n**$searchanime {Your query}:** Search for an anime title\n**$topMAL:** Gives the top rated anime on MyAnimeList\n**$mylist:** Sends your list of anime\n**$addanime {animeid}:** Adds an anime to your list based on the anime id (use $searchanime to find it)\n**$removeanime {animeid}: **Removes an anime from your list based on the anime id\n**$topserver:** Takes the average rating of all users on the current server to return the top 15 highest rated anime.\n**$resetchat:** Wipes Gojo's memory 🥀")
         except Exception as e:
             print(e)
             await interaction.response.send_message("Failed")
 
     @bot.command()
     async def help(ctx):
-        await ctx.message.reply("**Commands:**\n\n**$searchanime {Your query}:** Search for an anime title\n**$topMAL:** Gives the top rated anime on MyAnimeList\n**$mylist:** Sends your list of anime\n**$addanime {animeid}:** Adds an anime to your list based on the anime id (use $searchanime to find it)\n**$removeanime {animeid}: **Removes an anime from your list based on the anime id\n**$topserver:** Takes the average rating of all users on the current server to return the top 15 highest rated anime.")
+        await ctx.message.reply("**Commands:**\n\n**$searchanime {Your query}:** Search for an anime title\n**$topMAL:** Gives the top rated anime on MyAnimeList\n**$mylist:** Sends your list of anime\n**$addanime {animeid}:** Adds an anime to your list based on the anime id (use $searchanime to find it)\n**$removeanime {animeid}: **Removes an anime from your list based on the anime id\n**$topserver:** Takes the average rating of all users on the current server to return the top 15 highest rated anime.\n**$resetchat:** Wipes Gojo's memory 🥀")
 
-    @bot.command()
-    async def askgojo(ctx):
-        try:
-            input = ctx.message.content[10:]
-            resp = responses.ai_response("askgojo", input, None)
-            await ctx.message.reply(resp)
-        except Exception as e:
-            print(e)
-            await ctx.message.reply("Please check your input and try again")
 
     
     bot.run(TOKEN)
