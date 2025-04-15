@@ -62,7 +62,19 @@ def run_discord_bot(discord):
                 if channel:
                     global chat
                     chat = responses.create_chat
-                    await channel.send("<@&1341216663416340533> WAKEY WAKEY. You better start talking or I'll MAKE you talk.")
+                    
+                    role = None
+                    roleMade = False
+                    for i in channel.guild.roles:
+                        if i.name == "GOJO REVIVE":
+                            roleMade = True
+                            role = i
+
+                    if not roleMade:
+                        role = await channel.guild.create_role(name="GOJO REVIVE", colour=Colour.red(), mentionable=True)
+                    
+                    
+                    await channel.send(f"{role.mention} WAKEY WAKEY. You better start talking or I'll MAKE you talk.")
 
 
     def save_history(username, user_message, bot_response):
@@ -91,6 +103,8 @@ def run_discord_bot(discord):
 
     @bot.event
     async def on_message(message):
+        global chat
+        
         if message.author != bot.user:
             username = str(message.author)
             user_message = str(message.content)
@@ -135,16 +149,55 @@ def run_discord_bot(discord):
     monitored_channels = {}
     @bot.command()
     async def monitor(ctx):
+        
+        role = None
+        roleMade = False
+        for i in ctx.guild.roles:
+            if i.name == "GOJO REVIVE":
+                roleMade = True
+                role = i
+
+        if not roleMade:
+            role = await ctx.guild.create_role(name="GOJO REVIVE", colour=Colour.red(), mentionable=True)
+        
         monitored_channels[ctx.channel.id] = datetime.now(timezone.utc)
         await ctx.send(f"I'm monitoring this channel for inactivity, you better start yapping you BUMS.")
-    @bot.tree.command(name='monitor', description='List commands (non-slash commands)')
+  
+    @bot.tree.command(name='monitor', description='Monitor a channel')
     async def monitor(interaction: discord.Interaction):
         try:
+            role = None
+            roleMade = False
+            for i in interaction.guild.roles:
+                if i.name == "GOJO REVIVE":
+                    roleMade = True
+                    role = i
+
+            if not roleMade:
+                role = await interaction.guild.create_role(name="GOJO REVIVE", colour=Colour.red(), mentionable=True)
+            
             await interaction.response.send_message("I'm monitoring this channel for inactivity, you better start yapping you BUMS.")
         except Exception as e:
             print(e)
             await interaction.response.send_message("Failed")
 
+    @bot.command()
+    async def unmonitor(ctx):
+        try:
+            del monitored_channels[ctx.channel.id]
+        except Exception as e:
+            await ctx.send("This channel is not being monitored.")
+
+        await ctx.send("This channel is not being monitored.")
+
+    @bot.tree.command(name='unmonitor', description='Unmonitor a channel')
+    async def unmonitor(interaction: discord.Interaction):
+        try:
+            del monitored_channels[interaction.channel.id]
+        except Exception as e:
+            await interaction.response.send_message("This channel is not being monitored.")
+
+        await interaction.send_message("This channel is not being monitored.")
 
     #Reset chat bot
     @bot.command()
@@ -152,6 +205,12 @@ def run_discord_bot(discord):
         global chat
         chat = responses.create_chat
         await ctx.send("My memory is wiped 🥀")
+        
+    @bot.tree.command(name='resetchat', description='Wipes Gojo Memory')
+    async def resetchat(interaction: discord.Interaction):
+        global chat
+        chat = responses.create_chat
+        await interaction.response.send_message("My memory is wiped 🥀")
 
 
 
