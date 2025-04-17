@@ -1,4 +1,5 @@
 import os
+from discord import Colour
 from discord.ext import commands, tasks
 import responses
 import sqlite3
@@ -46,7 +47,7 @@ def run_discord_bot(discord):
         
         check_inactive_channels.start()
         
-
+    global chat
     chat = responses.create_chat()
     HISTORY_FILE = "conversation_history.txt"
     MAX_LINES = 300  # Set this to the max number of lines you want in the file
