@@ -62,7 +62,7 @@ def run_discord_bot(discord):
                 channel = bot.get_channel(channel_id)
                 if channel:
                     global chat
-                    chat = responses.create_chat
+                    chat = responses.create_chat()
                     
                     role = None
                     roleMade = False
@@ -200,18 +200,58 @@ def run_discord_bot(discord):
 
         await interaction.send_message("This channel is not being monitored.")
 
+
+
+
     #Reset chat bot
     @bot.command()
     async def resetchat(ctx):
         global chat
-        chat = responses.create_chat
+        chat = responses.create_chat()
         await ctx.send("My memory is wiped 🥀")
         
     @bot.tree.command(name='resetchat', description='Wipes Gojo Memory')
     async def resetchat(interaction: discord.Interaction):
         global chat
-        chat = responses.create_chat
+        chat = responses.create_chat()
         await interaction.response.send_message("My memory is wiped 🥀")
+
+    user_roles_backup = {}
+    @bot.command()
+    @commands.has_permissions(manage_roles=True)
+    async def imprison(ctx, member: discord.Member):
+        prisoner_role = discord.utils.get(ctx.guild.roles, name="Prisoner")
+        if not prisoner_role:
+            prisoner_role = await ctx.guild.create_role(name="Prisoner")
+
+        # Save roles and remove all except @everyone
+        previous_roles = [role for role in member.roles if role != ctx.guild.default_role and role != prisoner_role]
+        user_roles_backup[member.id] = [role.id for role in previous_roles]
+
+        await member.edit(roles=[prisoner_role])
+        await ctx.send(f"{member.mention} has been imprisoned.")
+
+        # Create prison realm channel if it doesn't exist
+        prison_channel = discord.utils.get(ctx.guild.text_channels, name="prison-realm")
+        if not prison_channel:
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                prisoner_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+            }
+            await ctx.guild.create_text_channel("prison-realm", overwrites=overwrites)
+            await ctx.send("Created channel: prison-realm")
+        
+    @bot.command()
+    @commands.has_permissions(manage_roles=True)
+    async def release(ctx, member: discord.Member):
+        if member.id not in user_roles_backup:
+            await ctx.send("No record of previous roles for this member.")
+            return
+
+        role_ids = user_roles_backup.pop(member.id)
+        roles_to_restore = [ctx.guild.get_role(role_id) for role_id in role_ids if ctx.guild.get_role(role_id)]
+        await member.edit(roles=roles_to_restore)
+        await ctx.send(f"{member.mention} has been released and roles restored.")
 
 
 

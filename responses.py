@@ -149,3 +149,5 @@ def delete_chat_history(filename="chat_history.json"):
         except Exception as e:
             print(e)
             return "An error occured"
+
+
