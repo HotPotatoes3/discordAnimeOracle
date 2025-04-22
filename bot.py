@@ -232,14 +232,14 @@ def run_discord_bot(discord):
         await ctx.send(f"{member.mention} has been imprisoned.")
 
         # Create prison realm channel if it doesn't exist
-        prison_channel = discord.utils.get(ctx.guild.text_channels, name="prison-realm")
+        prison_channel = discord.utils.get(ctx.guild.text_channels, name="infinite-void")
         if not prison_channel:
             overwrites = {
                 ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 prisoner_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
             }
-            await ctx.guild.create_text_channel("prison-realm", overwrites=overwrites)
-            await ctx.send("Created channel: prison-realm")
+            await ctx.guild.create_text_channel("infinite-void", overwrites=overwrites)
+            await ctx.send("Created channel: infinite-void")
         
     @bot.command()
     @commands.has_permissions(manage_roles=True)
