@@ -78,26 +78,6 @@ def run_discord_bot(discord):
                     await channel.send(f"{role.mention} WAKEY WAKEY. You better start talking or I'll MAKE you talk.")
 
 
-    def save_history(username, user_message, bot_response):
-        # Read the existing lines
-        try:
-            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-        except FileNotFoundError:
-            lines = []
-
-        # Append the new messages
-        lines.append(f"{username}: {user_message}\n")
-        lines.append(f"Bot: {bot_response}\n")
-
-        # Trim to the last MAX_LINES
-        if len(lines) > MAX_LINES:
-            lines = lines[-MAX_LINES:]
-
-        # Write back to the file
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            f.writelines(lines)
-
 
     
 
@@ -116,33 +96,24 @@ def run_discord_bot(discord):
                 if bot.user in message.mentions:
                     resp = chat.send_message(f"Respond relevantly to this chat message from a chatter,{username}, talking to you (<@1232601971870138409> is your ping, ignore it and avoid using it in your message): {user_message}").text
                     await message.reply(resp)
-                    save_history(username, user_message, resp)
                 elif message.reference is not None:
                     replied_message = await message.channel.fetch_message(message.reference.message_id)
                     if replied_message.author == bot.user:
                         resp = chat.send_message(f"Respond relevantly to this chat message from a chatter, {username}, talking to you): {user_message}").text
                         await message.reply(resp)
-                        save_history(username, user_message, resp)
                 elif message.guild is None:
                     resp = chat.send_message(f"Respond relevantly to this chat message (it's a dm to you): {user_message}").text
                     await message.author.send(resp)
-                    save_history(username, user_message, resp)
                 else:
                     rannum = random.randint(1,300)
                     if rannum >= 301:
                         resp = chat.send_message(f"Try to respond relevantly to this chat message from {username}, based on the discord chat history (They are usually not talking to you): {user_message}").text
                         await message.reply(resp)
-                        save_history(username, user_message, resp)
                     elif rannum == -1:
                         resp = chat.send_message(f"Make up a random reason to timeout this chatter, {username}, for 5 minutes based on their message: {user_message}").text
                         await message.reply(resp)
-                        await message.author.timeout(timedelta(minutes=5),reason = resp)
-                        save_history(username, user_message, resp)
-                    else:
-                        save_history(username, user_message, "")
-                        
+                        await message.author.timeout(timedelta(minutes=5),reason = resp)                     
             else:
-                save_history(username, user_message, "")
                 await bot.process_commands(message)
         if message.channel.id in monitored_channels:
             monitored_channels[message.channel.id] = datetime.now(timezone.utc)
