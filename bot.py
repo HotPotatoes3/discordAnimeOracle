@@ -190,48 +190,36 @@ def run_discord_bot(discord):
     user_roles_backup = {}
     @bot.command()
     @commands.has_permissions(manage_roles=True)
-    async def imprison(ctx, member: discord.Member, new_channel_name: str = "「♾」infinite-void"):
+    async def imprison(ctx, member: discord.Member):
         prisoner_role = discord.utils.get(ctx.guild.roles, name="Prisoner")
         if not prisoner_role:
             prisoner_role = await ctx.guild.create_role(name="Prisoner")
 
-        # Save current roles (except @everyone and Prisoner)
+        # Save roles and remove all except @everyone
         previous_roles = [role for role in member.roles if role != ctx.guild.default_role and role != prisoner_role]
         user_roles_backup[member.id] = [role.id for role in previous_roles]
 
         await member.edit(roles=[prisoner_role])
         await ctx.send(f"{member.mention} has been imprisoned.")
 
-        # Look for existing prison channel
-        prison_channel = None
-        for channel in ctx.guild.text_channels:
-            if prisoner_role in channel.overwrites:
-                if isinstance(channel.overwrites[prisoner_role], discord.PermissionOverwrite) and \
-                channel.overwrites[prisoner_role].read_messages:
-                    prison_channel = channel
-                    break
-
-        # Rename existing prison channel or create if not found
-        if prison_channel:
-            await prison_channel.edit(name=new_channel_name)
-        else:
+        # Create prison realm channel if it doesn't exist
+        prison_channel = discord.utils.get(ctx.guild.text_channels, name="「♾」infinite-void")
+        if not prison_channel:
             overwrites = {
                 ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 prisoner_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
             }
-            prison_channel = await ctx.guild.create_text_channel(new_channel_name, overwrites=overwrites)
-
-        # Lock all other channels from the prisoner
-        for channel in ctx.guild.text_channels:
-            if channel != prison_channel:
-                overwrite = channel.overwrites_for(prisoner_role)
-                overwrite.read_messages = False
-                await channel.set_permissions(prisoner_role, overwrite=overwrite)
-
-        await ctx.send(f"Channel {prison_channel.mention} is ready for {member.mention}.")
-    
-    
-    
+            for channel in ctx.guild.text_channels:
+                if channel != prison_channel:
+                    overwrite = channel.overwrites_for(prisoner_role)
+                    overwrite.read_messages = False
+                    await channel.set_permissions(prisoner_role, overwrite=overwrite)
+            await ctx.guild.create_text_channel("「♾」infinite-void", overwrites=overwrites)
+            await ctx.send("Created channel: 「♾」infinite-void")
+            
+            
+        
     @bot.command()
     @commands.has_permissions(manage_roles=True)
     async def release(ctx, member: discord.Member):
