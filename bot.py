@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 import random
 from datetime import datetime, timezone, timedelta
 import asyncio
+from better_profanity import profanity
+
 
 
 
@@ -77,10 +79,9 @@ def run_discord_bot(discord):
                     
                     await channel.send(f"{role.mention} WAKEY WAKEY. You better start talking or I'll MAKE you talk.")
 
-
-
     
 
+    swearCount = {}
 
     @bot.event
     async def on_message(message):
@@ -105,14 +106,28 @@ def run_discord_bot(discord):
                     resp = chat.send_message(f"Respond relevantly to this chat message (it's a dm to you): {user_message}").text
                     await message.author.send(resp)
                 else:
-                    rannum = random.randint(1,300)
-                    if rannum >= 301:
-                        resp = chat.send_message(f"Try to respond relevantly to this chat message from {username}, based on the discord chat history (They are usually not talking to you): {user_message}").text
-                        await message.reply(resp)
-                    elif rannum == -1:
-                        resp = chat.send_message(f"Make up a random reason to timeout this chatter, {username}, for 5 minutes based on their message: {user_message}").text
-                        await message.reply(resp)
-                        await message.author.timeout(timedelta(minutes=5),reason = resp)                     
+                    
+                    if profanity.contains_profanity(user_message):    
+                        role = None
+                        roleMade = False
+                        for i in message.guild.roles:
+                            if "swear pass" in i.name.lower():
+                                roleMade = True
+                                role = i
+
+                        if not roleMade:
+                            role = await message.guild.create_role(name="Swear Pass!", colour=Colour.red(), mentionable=True)
+                            
+                        if role not in message.author.roles:
+                            
+                            if username not in swearCount:
+                                swearCount[username] = 1
+                            else:
+                                swearCount[username] += 1
+                                
+                            await message.reply(f"Uh oh, you said a stinky swear word... you've been naughty {swearCount[username]} time(s)") 
+                    
+                    
             else:
                 await bot.process_commands(message)
         if message.channel.id in monitored_channels:
