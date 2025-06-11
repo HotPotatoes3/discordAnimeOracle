@@ -93,7 +93,7 @@ def run_discord_bot(discord):
         for i in gay_channels:
             rand = random.randint(1, 100)
             print (rand)
-            if rand <= 50:
+            if rand <= 8:
                 channel = bot.get_channel(i)
                 await channel.send(random.choice(gay_gifs))
     
