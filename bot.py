@@ -48,6 +48,7 @@ def run_discord_bot(discord):
         print("Initialized database")
         
         check_inactive_channels.start()
+        gay_loop.start()
         
     global chat
     chat = responses.create_chat()
@@ -58,28 +59,50 @@ def run_discord_bot(discord):
     @tasks.loop(minutes=20)
     async def check_inactive_channels():
         now = datetime.now(timezone.utc)
-        for channel_id, last_message_time in monitored_channels.items():
-            # print(now - last_message_time)
-            if now - last_message_time > timedelta(minutes=120):
-                channel = bot.get_channel(channel_id)
-                if channel:
-                    global chat
-                    chat = responses.create_chat()
+        # for channel_id, last_message_time in monitored_channels.items():
+        #     # print(now - last_message_time)
+        #     if now - last_message_time > timedelta(minutes=120):
+        #         channel = bot.get_channel(channel_id)
+        #         if channel:
+        #             global chat
+        #             chat = responses.create_chat()
                     
-                    role = None
-                    roleMade = False
-                    for i in channel.guild.roles:
-                        if i.name == "GOJO REVIVE":
-                            roleMade = True
-                            role = i
+        #             role = None
+        #             roleMade = False
+        #             for i in channel.guild.roles:
+        #                 if i.name == "GOJO REVIVE":
+        #                     roleMade = True
+        #                     role = i
 
-                    if not roleMade:
-                        role = await channel.guild.create_role(name="GOJO REVIVE", colour=Colour.red(), mentionable=True)
+        #             if not roleMade:
+        #                 role = await channel.guild.create_role(name="GOJO REVIVE", colour=Colour.red(), mentionable=True)
                     
                     
-                    await channel.send(f"{role.mention} WAKEY WAKEY. You better start talking or I'll MAKE you talk.")
+        #             await channel.send(f"{role.mention} WAKEY WAKEY. You better start talking or I'll MAKE you talk.")
+
+        for guild_id, last_message_time in monitored_guilds.items():
+            if now - last_message_time > timedelta(minutes=120):
+                global chat
+                chat = responses.create_chat()
+
+
+    gay_gifs = ["https://tenor.com/view/jack-caleb-jack-and-caleb-caleb-and-jack-gay-gif-14000590802200375599", "https://tenor.com/view/gay-anime-anime-gay-gif-18237425560170880188", "https://tenor.com/view/gay-anime-anime-gay-gif-16466291097247368229", "https://tenor.com/view/virtual-hug-black-guys-kissing-hug-sending-virtual-hug-gif-17592791025266555845"]
+
+    @tasks.loop(minutes=5)
+    async def gay_loop():
+        for i in gay_channels:
+            rand = random.randint(1, 100)
+            print (rand)
+            if rand <= 50:
+                channel = bot.get_channel(i)
+                await channel.send(random.choice(gay_gifs))
+    
+    
+        
 
     
+    monitored_guilds = {}
+    gay_channels = []
 
     swearCount = {}
 
@@ -106,7 +129,7 @@ def run_discord_bot(discord):
                     resp = chat.send_message(f"Respond relevantly to this chat message (it's a dm to you): {user_message}").text
                     await message.author.send(resp)
                 else:
-                    
+                
                     if profanity.contains_profanity(user_message):    
                         role = None
                         roleMade = False
@@ -130,77 +153,36 @@ def run_discord_bot(discord):
                     
             else:
                 await bot.process_commands(message)
-        if message.channel.id in monitored_channels:
-            monitored_channels[message.channel.id] = datetime.now(timezone.utc)
-
-    monitored_channels = {}
-    @bot.command()
-    async def monitor(ctx):
         
-        role = None
-        roleMade = False
-        for i in ctx.guild.roles:
-            if i.name == "GOJO REVIVE":
-                roleMade = True
-                role = i
+        monitored_guilds[message.guild.id] = datetime.now(timezone.utc)
 
-        if not roleMade:
-            role = await ctx.guild.create_role(name="GOJO REVIVE", colour=Colour.red(), mentionable=True)
-        
-        monitored_channels[ctx.channel.id] = datetime.now(timezone.utc)
-        await ctx.send(f"I'm monitoring this channel for inactivity, you better start yapping you BUMS.")
-  
-    @bot.tree.command(name='monitor', description='Monitor a channel')
-    async def monitor(interaction: discord.Interaction):
-        try:
-            role = None
-            roleMade = False
-            for i in interaction.guild.roles:
-                if i.name == "GOJO REVIVE":
-                    roleMade = True
-                    role = i
-
-            if not roleMade:
-                role = await interaction.guild.create_role(name="GOJO REVIVE", colour=Colour.red(), mentionable=True)
-            
-            await interaction.response.send_message("I'm monitoring this channel for inactivity, you better start yapping you BUMS.")
-        except Exception as e:
-            print(e)
-            await interaction.response.send_message("Failed")
 
     @bot.command()
-    async def unmonitor(ctx):
-        try:
-            del monitored_channels[ctx.channel.id]
-        except Exception as e:
-            await ctx.send("This channel is not being monitored.")
-
-        await ctx.send("This channel is not being monitored.")
-
-    @bot.tree.command(name='unmonitor', description='Unmonitor a channel')
-    async def unmonitor(interaction: discord.Interaction):
-        try:
-            del monitored_channels[interaction.channel.id]
-        except Exception as e:
-            await interaction.response.send_message("This channel is not being monitored.")
-
-        await interaction.send_message("This channel is not being monitored.")
-
-
-
-
-    #Reset chat bot
-    @bot.command()
-    async def resetchat(ctx):
-        global chat
-        chat = responses.create_chat()
-        await ctx.send("My memory is wiped 🥀")
+    @commands.has_permissions(manage_channels=True)
+    async def gaymode(ctx):
         
-    @bot.tree.command(name='resetchat', description='Wipes Gojo Memory')
-    async def resetchat(interaction: discord.Interaction):
-        global chat
-        chat = responses.create_chat()
-        await interaction.response.send_message("My memory is wiped 🥀")
+        if ctx.channel.id not in gay_channels:
+            gay_channels.append(ctx.channel.id)
+            await ctx.send(f"This channel is now GAY")
+        else:
+            gay_channels.remove(ctx.channel.id)
+            await ctx.send(f"This channel is STRAIGHT 🥀")
+        
+
+
+
+    # #Reset chat bot
+    # @bot.command()
+    # async def resetchat(ctx):
+    #     global chat
+    #     chat = responses.create_chat()
+    #     await ctx.send("My memory is wiped 🥀")
+        
+    # @bot.tree.command(name='resetchat', description='Wipes Gojo Memory')
+    # async def resetchat(interaction: discord.Interaction):
+    #     global chat
+    #     chat = responses.create_chat()
+    #     await interaction.response.send_message("My memory is wiped 🥀")
 
     user_roles_backup = {}
     @bot.command()
