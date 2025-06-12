@@ -88,7 +88,7 @@ def run_discord_bot(discord):
 
     gay_gifs = ["https://tenor.com/view/jack-caleb-jack-and-caleb-caleb-and-jack-gay-gif-14000590802200375599", "https://tenor.com/view/gay-anime-anime-gay-gif-18237425560170880188", "https://tenor.com/view/gay-anime-anime-gay-gif-16466291097247368229", "https://tenor.com/view/virtual-hug-black-guys-kissing-hug-sending-virtual-hug-gif-17592791025266555845"]
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(minutes=1)
     async def gay_loop():
         for i in gay_channels:
             rand = random.randint(1, 100)
